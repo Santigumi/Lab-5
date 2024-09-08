@@ -45,6 +45,7 @@ app.post("/client", (request, response) => {
 
 io.on("connection", (socket) => {
   console.log("a user connected"); // This will be printed every time a client connects to the
+    
   socket.on("chat-messages", (message) => {
     console.log(message);
     io.emit("chat-messages", message); // Broadcasts the message to all connected clients including the sender
@@ -54,11 +55,13 @@ io.on("connection", (socket) => {
     console.log(data);
     io.emit("data-client", data)
   })
+
   socket.on("data-driver", (data) => {
     console.log(data);
     io.emit("data-driver", data)
   })
 });
+
 
 httpServer.listen(5050, () => {
   // Starts the server on port 5050, same as before but now we are using the httpServer object

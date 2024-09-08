@@ -110,6 +110,7 @@ async function renderPage(){
   Request.appendChild(titule)
 
   const infoPasajero = document.createElement('div')
+  infoPasajero.className = 'infoPasajero'
   Request.appendChild(infoPasajero)
 
   const Accept = document.createElement('button')
@@ -128,9 +129,6 @@ async function renderPage(){
   titule.innerText = 'Viaje en progreso'
   Trip.appendChild(titule)
   
-  const infoPasajero = document.createElement('div')
-  Trip.appendChild(infoPasajero)
-
   const Iniciar = document.createElement('button')
   Iniciar.innerText = 'Iniciar viaje'
   Trip.appendChild(Iniciar)
@@ -155,23 +153,6 @@ function changeScreen(e) {
   renderPage()
 }
 
-socket.on("data-client", (data) => {
-  const section = document.getElementById('Request')
-  const cart = document.createElement('cart')
-  const nombre = document.createElement('p')
-  nombre.innerText = data.nombre
-  cart.appendChild(nombre)
-
-  const origen = document.createElement('p')
-  origen.innerText = data.origen
-  cart.appendChild(origen)
-
-  const destino = document.createElement('p')
-  destino.innerText = data.destino
-  cart.appendChild(destino)
-  section.appendChild(cart)
-});
-
 async function createUser() {
   try {
     const usuario = {
@@ -189,8 +170,8 @@ async function createUser() {
     if (!response.ok) {
       throw new Error("Network response was not ok");
     }
-    fetchData()
     changeScreen('request')
+    await fetchData()
   } catch (error) {
     alert('usuario no registrado')
   }
@@ -199,7 +180,58 @@ async function createUser() {
 async function fetchData() {
   socket.emit("data-driver", form);
   console.log(form);
+  if (appState.page === 'request') {
+    clientsData()
+    }
   }
 
+  async function fecthClientsData(){
+    try {
+        const response = await fetch("http://localhost:5050/clients")
+        if (!response.ok) {
+            throw new Error("Network response was not ok");
+          }
+        const clientsData = await response.json()
+        return clientsData
+    } catch (error) {
+        alert('hi')
+    }
+}
+
+async function clientsData(){
+  const clientData = await fecthClientsData()
+  const Request = document.getElementById('Request')
+
+  let infoPasajero = document.querySelector('.infoPasajero');
+
+  if (infoPasajero) {
+    infoPasajero.innerHTML = '';
+  } else {
+    infoPasajero = document.createElement('div');
+    infoPasajero.className = 'infoPasajero';
+    Request.appendChild(infoPasajero);
+  }
+
+  clientData.forEach(element => {
+    const cart = document.createElement('cart')
+    const nombre = document.createElement('p')
+    nombre.innerText = element.nombre
+    cart.appendChild(nombre)
+  
+    const origen = document.createElement('p')
+    origen.innerText = element.origen
+    cart.appendChild(origen)
+  
+    const destino = document.createElement('p')
+    destino.innerText = element.destino
+    cart.appendChild(destino)
+    infoPasajero.appendChild(cart)
+  });
+}
 
 
+socket.on("data-client", ()=>{
+  if(appState.page === 'request'){
+    clientsData()
+  }
+})

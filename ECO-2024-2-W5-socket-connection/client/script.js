@@ -79,12 +79,8 @@ async function renderPage(){
   titule.innerText = 'Conductores disponibles'
   select.appendChild(titule)
 
-  const list = document.createElement('div');
-  list.id = 'list'
-
-  select.appendChild(list)
-
   const Activar = document.createElement('button')
+  Activar.innerText = 'Iniciar viaje'
   select.appendChild(Activar)
   Activar.addEventListener('click', function() {changeScreen('trip')})
 
@@ -120,21 +116,41 @@ function changeScreen(e) {
   renderPage()
 }
 
-socket.on("data-client", (data) => {
-    const section = document.getElementById('Select')
+async function DriverData(){
+  const driverData = await fecthDriverData()
+  console.log(driverData);
+
+  let list = document.querySelector('.listDrivers');
+
+  if (list) {
+    list.innerHTML = '';
+  } else {
+    list = document.createElement('div');
+    list.className = 'listDrivers';
+    Select.appendChild(list);
+  }
+
+  driverData.forEach(element => {
     const cart = document.createElement('cart')
     const nombre = document.createElement('p')
-    nombre.innerText = data.nombre
+    nombre.innerText = element.nombre
     cart.appendChild(nombre)
-
+  
     const origen = document.createElement('p')
-    origen.innerText = data.origen
+    origen.innerText = element.carro
     cart.appendChild(origen)
-
+  
     const destino = document.createElement('p')
-    destino.innerText = data.destino
+    destino.innerText = element.placa
     cart.appendChild(destino)
-    section.appendChild(cart)
+    list.appendChild(cart)
+  });
+}
+
+socket.on("data-driver", () => {
+  if(appState.page === 'select'){
+    DriverData()
+  }
 });
 
 async function createUser() {
@@ -154,8 +170,8 @@ async function createUser() {
     if (!response.ok) {
       throw new Error("Network response was not ok");
     }
-    fetchData()
     changeScreen('select')
+    fetchData()
   } catch (error) {
     alert('usuario no registrado')
   }
@@ -164,4 +180,21 @@ async function createUser() {
 async function fetchData() {
   socket.emit("data-client", form);
   console.log(form);
+  if (appState.page === 'select') {
+    DriverData()
+    }
   }
+
+async function fecthDriverData() {
+  try {
+    const response = await fetch("http://localhost:5050/drivers")
+    if (!response.ok) {
+        throw new Error("Network response was not ok");
+      }
+    const driversData = await response.json()
+    return driversData
+} catch (error) {
+    alert('Error cargando los datos')
+}
+}
+
